@@ -181,10 +181,13 @@
         <div class="sec-line"></div>
         <span id="sectionTitle">Keşfet</span>
       </div>
-      <div style="display:flex;align-items:center;gap:10px;">
+      <div style="display:flex;align-items:center;gap:8px;">
         <span class="sec-count" id="filmCount"></span>
-        <button class="btn-random" id="randomMovieBtn" onclick="goRandomMovie()" title="Rastgele iyi bir film öner">
-          🎲 Rastgele Film
+        <a href="/recommendations" class="btn-ai" style="padding:7px 12px; font-size:.8rem; border-radius:var(--r-sm);">
+          🤖 AI Öneri
+        </a>
+        <button class="btn-random" id="randomMovieBtn" onclick="goRandomMovie()" title="Rastgele iyi bir film öner" style="padding:7px 12px; font-size:.8rem;">
+          🎲 Rastgele
         </button>
       </div>
     </div>
@@ -206,9 +209,6 @@
 </div>
 
 <footer class="app-footer">
-  <div class="footer-main">
-    <strong>SineBot</strong> · Makine Öğrenmesi Destekli Film Öneri Sistemi · Veri Madenciliği Projesi © 2026
-  </div>
   <div class="footer-citation">
     <span class="footer-citation-label">📚 Veri Kaynağı</span>
     F. Maxwell Harper ve Joseph A. Konstan. 2015.
