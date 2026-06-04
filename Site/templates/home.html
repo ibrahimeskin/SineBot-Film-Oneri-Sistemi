@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SineBot — Film Keşfet</title>
+  <meta name="description" content="Yapay zeka destekli film öneri ve keşif platformu.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- ── NAV ─────────────────────────────────────────────── -->
+<nav class="top-nav">
+  <a href="/" class="brand" id="brand-logo">
+    <span class="brand-name">SINE<em>BOT</em></span>
+  </a>
+
+  <a href="/" class="nav-icon-btn" id="nav-home-icon" title="Ana Sayfa">🏠</a>
+
+  <div class="nav-links">
+    <a href="/" class="nav-link active" id="nav-kesfet">Keşfet</a>
+    <a href="/dataset" class="nav-link" id="nav-dataset">Veri Seti</a>
+  </div>
+
+  <!-- CENTER SEARCH -->
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    <input type="text" class="nav-search-input" id="navSearchInput"
+           placeholder="Film ara..." autocomplete="off">
+    <div class="nav-search-drop" id="navSearchDrop"></div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menü" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="nav-links" style="margin-left:0;">
+    <a href="/recommendations" class="btn-ai" id="nav-ai-btn">
+      🤖 AI Öneri
+    </a>
+  </div>
+</nav>
+
+<!-- Mobile Menu Drawer -->
+<div class="mobile-menu" id="mobileMenu" onclick="closeMobileMenuOutside(event)">
+  <div class="mobile-menu-panel">
+    <a href="/" class="mobile-menu-link active" id="mm-kesfet">
+      <span class="mml-icon">🏠</span> Keşfet
+    </a>
+    <a href="/dataset" class="mobile-menu-link" id="mm-dataset">
+      <span class="mml-icon">📊</span> Veri Seti
+    </a>
+    <div class="mobile-menu-divider"></div>
+    <div style="padding:8px 14px 6px;">
+      <div style="font-size:.65rem;font-weight:700;letter-spacing:1px;color:var(--t3);text-transform:uppercase;margin-bottom:8px;">Film Ara</div>
+      <div style="position:relative;">
+        <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#888;font-size:.9rem;">🔍</span>
+        <input type="text" id="mobileSearchInput" placeholder="Film ara... (en az 5 harf)"
+          style="width:100%;height:42px;background:#fff;border-radius:999px;padding:0 14px 0 36px;font-size:.875rem;color:#111;border:none;outline:none;">
+      </div>
+      <div id="mobileSearchDrop" style="display:none;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--r-md);margin-top:6px;max-height:240px;overflow-y:auto;"></div>
+    </div>
+    <div class="mobile-menu-divider"></div>
+    <a href="/recommendations" class="mobile-menu-ai" id="mm-ai">
+      🤖 AI Film Öneri
+    </a>
+  </div>
+</div>
+
+<!-- ── FILTER BAR ───────────────────────────────────────── -->
+<div class="filter-bar" id="filterBar">
+  <span class="filter-bar-label">Film Robotu</span>
+
+  <!-- İçerik -->
+  <div class="fdd" id="fddIcerik">
+    <div class="fdd-btn" onclick="toggleFdd('fddIcerik')">
+      <div class="fdd-inner">
+        <span class="fdd-lbl">İçerik</span>
+        <span class="fdd-val" id="fddIcerikVal">Film</span>
+      </div>
+      <span class="fdd-arrow">▾</span>
+    </div>
+    <div class="fdd-menu">
+      <div class="fdd-scroll">
+        <div class="fdd-item sel" data-val="film"><span class="fdd-chk">✓</span> Film</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Türler -->
+  <div class="fdd" id="fddTurler">
+    <div class="fdd-btn" onclick="toggleFdd('fddTurler')">
+      <div class="fdd-inner">
+        <span class="fdd-lbl">Türler</span>
+        <span class="fdd-val" id="fddTurlerVal">Hepsi</span>
+      </div>
+      <span class="fdd-arrow">▾</span>
+    </div>
+    <div class="fdd-menu">
+      <div class="fdd-scroll" id="genreMenuScroll">
+        <div class="fdd-item sel" data-genre-id="" id="genre-all"><span class="fdd-chk">✓</span> Hepsi</div>
+        <div class="fdd-item" data-genre-id="1"><span class="fdd-chk">✓</span> Action</div>
+        <div class="fdd-item" data-genre-id="2"><span class="fdd-chk">✓</span> Adventure</div>
+        <div class="fdd-item" data-genre-id="3"><span class="fdd-chk">✓</span> Animation</div>
+        <div class="fdd-item" data-genre-id="4"><span class="fdd-chk">✓</span> Children</div>
+        <div class="fdd-item" data-genre-id="5"><span class="fdd-chk">✓</span> Comedy</div>
+        <div class="fdd-item" data-genre-id="6"><span class="fdd-chk">✓</span> Crime</div>
+        <div class="fdd-item" data-genre-id="7"><span class="fdd-chk">✓</span> Documentary</div>
+        <div class="fdd-item" data-genre-id="8"><span class="fdd-chk">✓</span> Drama</div>
+        <div class="fdd-item" data-genre-id="9"><span class="fdd-chk">✓</span> Fantasy</div>
+        <div class="fdd-item" data-genre-id="10"><span class="fdd-chk">✓</span> Film-Noir</div>
+        <div class="fdd-item" data-genre-id="11"><span class="fdd-chk">✓</span> Horror</div>
+        <div class="fdd-item" data-genre-id="12"><span class="fdd-chk">✓</span> IMAX</div>
+        <div class="fdd-item" data-genre-id="13"><span class="fdd-chk">✓</span> Musical</div>
+        <div class="fdd-item" data-genre-id="14"><span class="fdd-chk">✓</span> Mystery</div>
+        <div class="fdd-item" data-genre-id="15"><span class="fdd-chk">✓</span> Romance</div>
+        <div class="fdd-item" data-genre-id="16"><span class="fdd-chk">✓</span> Sci-Fi</div>
+        <div class="fdd-item" data-genre-id="17"><span class="fdd-chk">✓</span> Thriller</div>
+        <div class="fdd-item" data-genre-id="18"><span class="fdd-chk">✓</span> War</div>
+        <div class="fdd-item" data-genre-id="19"><span class="fdd-chk">✓</span> Western</div>
+      </div>
+      <div class="fdd-reset" onclick="resetGenreFilter()">Sıfırla</div>
+    </div>
+  </div>
+
+  <!-- Yıllar -->
+  <div class="fdd" id="fddYillar">
+    <div class="fdd-btn" onclick="toggleFdd('fddYillar')">
+      <div class="fdd-inner">
+        <span class="fdd-lbl">Yıllar</span>
+        <span class="fdd-val" id="fddYillarVal">Hepsi</span>
+      </div>
+      <span class="fdd-arrow">▾</span>
+    </div>
+    <div class="fdd-menu">
+      <div class="fdd-scroll">
+        <div class="fdd-item sel" data-year="0" data-label="Hepsi"><span class="fdd-chk">✓</span> Hepsi</div>
+        <div class="fdd-item" data-year="2022" data-label="2020'ler"><span class="fdd-chk">✓</span> 2020'ler</div>
+        <div class="fdd-item" data-year="2015" data-label="2010'lar"><span class="fdd-chk">✓</span> 2010'lar</div>
+        <div class="fdd-item" data-year="2005" data-label="2000'ler"><span class="fdd-chk">✓</span> 2000'ler</div>
+        <div class="fdd-item" data-year="1995" data-label="1990'lar"><span class="fdd-chk">✓</span> 1990'lar</div>
+        <div class="fdd-item" data-year="1985" data-label="1980'ler"><span class="fdd-chk">✓</span> 1980'ler</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IMDb Puanı -->
+  <div class="fdd" id="fddPuan">
+    <div class="fdd-btn" onclick="toggleFdd('fddPuan')">
+      <div class="fdd-inner">
+        <span class="fdd-lbl">IMDb Puanı</span>
+        <span class="fdd-val" id="fddPuanVal">Hepsi</span>
+      </div>
+      <span class="fdd-arrow">▾</span>
+    </div>
+    <div class="fdd-menu">
+      <div class="fdd-scroll">
+        <div class="fdd-item sel" data-min="0" data-label="Hepsi"><span class="fdd-chk">✓</span> Hepsi</div>
+        <div class="fdd-item" data-min="9" data-label="9+ Puan"><span class="fdd-chk">✓</span> ⭐ 9+ Puan</div>
+        <div class="fdd-item" data-min="8" data-label="8+ Puan"><span class="fdd-chk">✓</span> ⭐ 8+ Puan</div>
+        <div class="fdd-item" data-min="7" data-label="7+ Puan"><span class="fdd-chk">✓</span> ⭐ 7+ Puan</div>
+        <div class="fdd-item" data-min="6" data-label="6+ Puan"><span class="fdd-chk">✓</span> ⭐ 6+ Puan</div>
+        <div class="fdd-item" data-min="5" data-label="5+ Puan"><span class="fdd-chk">✓</span> ⭐ 5+ Puan</div>
+      </div>
+    </div>
+  </div>
+
+
+  <button class="filter-clear" id="filterClearBtn" onclick="clearAllFilters()">Filtreleri Temizle</button>
+</div>
+
+<!-- ── MAIN ─────────────────────────────────────────────── -->
+<div class="app-container">
+  <div class="main-wrap">
+
+    <div class="sec-head">
+      <div class="sec-title">
+        <div class="sec-line"></div>
+        <span id="sectionTitle">Keşfet</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span class="sec-count" id="filmCount"></span>
+        <button class="btn-random" id="randomMovieBtn" onclick="goRandomMovie()" title="Rastgele iyi bir film öner">
+          🎲 Rastgele Film
+        </button>
+      </div>
+    </div>
+
+    <div class="film-grid" id="filmGrid">
+      <div class="grid-loading">
+        <div class="spinner"></div>
+        <div class="grid-loading-txt">Filmler yükleniyor...</div>
+      </div>
+    </div>
+
+    <div class="load-more-wrap" id="loadMoreWrap" style="display:none;">
+      <button class="btn-more" id="loadMoreBtn" onclick="loadMoreFilms()">
+        Daha Fazla Film Göster
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div class="footer-main">
+    <strong>SineBot</strong> · Makine Öğrenmesi Destekli Film Öneri Sistemi · Veri Madenciliği Projesi © 2026
+  </div>
+  <div class="footer-citation">
+    <span class="footer-citation-label">📚 Veri Kaynağı</span>
+    F. Maxwell Harper ve Joseph A. Konstan. 2015.
+    <em>The MovieLens Datasets: History and Context.</em>
+    ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4: 19:1–19:19.
+    <a href="https://doi.org/10.1145/2827872" target="_blank" class="footer-citation-link">doi:10.1145/2827872</a>
+    &nbsp;·&nbsp;
+    <a href="http://grouplens.org/datasets/" target="_blank" class="footer-citation-link">GroupLens</a>
+    &nbsp;·&nbsp; Veri seti: <strong>MovieLens ml-32m</strong> (200.948 kullanıcı · 87.585 film · 32M puanlama)
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  // Close dropdowns on outside click
+  document.addEventListener('click', e => {
+    if (!e.target.closest('.fdd')) document.querySelectorAll('.fdd.open').forEach(d => d.classList.remove('open'));
+    if (!e.target.closest('.nav-search')) document.getElementById('navSearchDrop').style.display = 'none';
+    if (!e.target.closest('.mobile-menu') && !e.target.closest('#navHamburger')) {
+      closeMobileMenu();
+    }
+  });
+
+  // Mobile menu
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobileMenu');
+    const btn  = document.getElementById('navHamburger');
+    const open = menu.classList.contains('open');
+    if (open) { closeMobileMenu(); } else { menu.classList.add('open'); btn.classList.add('open'); }
+  }
+  function closeMobileMenu() {
+    document.getElementById('mobileMenu')?.classList.remove('open');
+    document.getElementById('navHamburger')?.classList.remove('open');
+  }
+  function closeMobileMenuOutside(e) {
+    if (!e.target.closest('.mobile-menu-panel')) closeMobileMenu();
+  }
+
+  // Mobile search
+  let _mobileSearchTimer = null;
+  const mobileInp  = document.getElementById('mobileSearchInput');
+  const mobileDrop = document.getElementById('mobileSearchDrop');
+  if (mobileInp) {
+    mobileInp.addEventListener('input', function() {
+      const q = this.value.trim();
+      clearTimeout(_mobileSearchTimer);
+      mobileDrop.style.display = 'none'; mobileDrop.innerHTML = '';
+      if (q.length < 5) return;
+      _mobileSearchTimer = setTimeout(async () => {
+        try {
+          const r = await fetch(`/api/search_movies?q=${encodeURIComponent(q)}`);
+          const d = await r.json();
+          const results = d.results || [];
+          if (!results.length) { mobileDrop.innerHTML = '<div style="padding:16px;text-align:center;color:var(--t3);font-size:.85rem;">Sonuç bulunamadı</div>'; mobileDrop.style.display = 'block'; return; }
+          mobileDrop.innerHTML = '';
+          results.forEach(m => {
+            const item = document.createElement('div');
+            item.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--border);';
+            item.innerHTML = `<div><div style="font-size:.875rem;font-weight:600;color:var(--t1);">${m.title}</div><div style="font-size:.7rem;color:var(--t2);">${m.year}</div></div>${m.avg_rating ? `<span style="margin-left:auto;font-size:.75rem;font-weight:700;color:var(--gold);">⭐${m.avg_rating}</span>` : ''}`;
+            item.addEventListener('click', () => { window.location.href = `/movie/${m.movieId}`; });
+            mobileDrop.appendChild(item);
+          });
+          mobileDrop.style.display = 'block';
+        } catch {}
+      }, 300);
+    });
+  }
+
+  // Rastgele film
+  async function goRandomMovie() {
+    const btn = document.getElementById('randomMovieBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Seçiliyor...';
+    try {
+      const r = await fetch('/api/random_movie');
+      const d = await r.json();
+      if (d.movieId) window.location.href = `/movie/${d.movieId}`;
+    } catch(e) {
+      btn.textContent = '🎲 Rastgele Film';
+    }
+    btn.disabled = false;
+  }
+</script>
+</body>
+</html>

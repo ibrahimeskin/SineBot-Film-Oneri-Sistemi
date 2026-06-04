@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ movie.title }} — SineBot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/" class="brand" id="brand-logo">
+    <span class="brand-name">SINE<em>BOT</em></span>
+  </a>
+  <a href="/" class="nav-icon-btn" title="Ana Sayfa">🏠</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link" id="nav-kesfet">Keşfet</a>
+    <a href="/" class="nav-link" id="nav-filmler">Filmler</a>
+  </div>
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    <input type="text" class="nav-search-input" id="navSearchInput"
+           placeholder="Film ara..." autocomplete="off">
+    <div class="nav-search-drop" id="navSearchDrop"></div>
+  </div>
+
+  <!-- Hamburger (mobile) -->
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menü" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="nav-links" style="margin-left:0;">
+    <a href="/recommendations" class="btn-ai" id="nav-ai-btn">🤖 AI Öneri</a>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu" onclick="if(!event.target.closest('.mobile-menu-panel'))document.getElementById('mobileMenu').classList.remove('open'),document.getElementById('navHamburger').classList.remove('open')">
+  <div class="mobile-menu-panel">
+    <a href="/" class="mobile-menu-link"><span class="mml-icon">🏠</span> Keşfet</a>
+    <a href="/recommendations" class="mobile-menu-ai">🤖 AI Film Öneri</a>
+  </div>
+</div>
+
+
+<div class="app-container">
+  <div class="detail-wrap" id="movie-detail-{{ movie.movieId }}">
+
+    <a href="javascript:history.back()" class="btn-back" id="back-btn">← Geri Dön</a>
+
+    <div class="detail-hero">
+      <!-- Poster -->
+      <div class="detail-poster" id="detail-poster-wrap">
+        {% if movie.poster_url %}
+          <img src="{{ movie.poster_url }}" alt="{{ movie.title }}"
+               onerror="this.parentNode.innerHTML='<div class=\'detail-poster-fb\'>🎬<span style=\'font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3)\'>Poster Yok</span></div>'">
+        {% else %}
+          <div class="detail-poster-fb">
+            🎬
+            <span style="font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--t3);">Poster Yok</span>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Info -->
+      <div class="detail-info">
+        <div class="detail-badges">
+          <span class="detail-badge">📅 {{ movie.year or 'Bilinmiyor' }}</span>
+          <span class="detail-badge">🎬 #{{ movie.movieId }}</span>
+          {% if movie.avg_movie_rating %}
+          <span class="detail-badge" style="color:var(--gold);border-color:rgba(245,197,24,.3);background:rgba(245,197,24,.08);">
+            ⭐ {{ "%.1f"|format(movie.avg_movie_rating * 2) }}/10
+          </span>
+          {% endif %}
+        </div>
+
+        <h1 class="detail-title">{{ movie.title }}</h1>
+
+        <div class="detail-genres">
+          {% for gname in movie.genre_names %}
+            <span class="detail-genre">{{ gname }}</span>
+          {% endfor %}
+        </div>
+
+        <div class="detail-stats">
+          <div class="detail-stat">
+            <span class="detail-stat-v" style="color:var(--gold);">
+              {{ "%.1f"|format(movie.avg_movie_rating * 2) if movie.avg_movie_rating else '—' }}
+            </span>
+            <span class="detail-stat-k">Puan / 10</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-v">
+              {{ "%.2f"|format(movie.avg_movie_rating) if movie.avg_movie_rating else '—' }}
+            </span>
+            <span class="detail-stat-k">Ortalama / 5</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-v">{{ movie.year or '—' }}</span>
+            <span class="detail-stat-k">Yapım Yılı</span>
+          </div>
+          <div class="detail-stat">
+            <span class="detail-stat-v">{{ movie.tmdbId_clean or '—' }}</span>
+            <span class="detail-stat-k">TMDb ID</span>
+          </div>
+        </div>
+
+        <div class="detail-links">
+          {% if movie.imdbId_clean %}
+          <a href="https://www.imdb.com/title/tt{{ movie.imdbId_clean }}"
+             target="_blank" class="dl dl-imdb" id="imdb-link">
+            ⭐ IMDb'de Gör
+          </a>
+          {% endif %}
+          {% if movie.tmdbId_clean %}
+          <a href="https://www.themoviedb.org/movie/{{ movie.tmdbId_clean }}"
+             target="_blank" class="dl dl-tmdb" id="tmdb-link">
+            🎥 TMDb'de Gör
+          </a>
+          {% endif %}
+          <a href="/recommendations" class="dl dl-rec" id="similar-btn">
+            🤖 Benzer Film Bul
+          </a>
+        </div>
+
+        {% if movie.overview %}
+        <div class="detail-overview">
+          <div class="detail-overview-title">📖 Film Hakkında</div>
+          <p class="detail-overview-text">{{ movie.overview }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div class="footer-main">
+    <strong>SineBot</strong> · Makine Öğrenmesi Destekli Film Öneri Sistemi · Veri Madenciliği Projesi © 2026
+  </div>
+  <div class="footer-citation">
+    <span class="footer-citation-label">📚 Veri Kaynağı</span>
+    F. Maxwell Harper ve Joseph A. Konstan. 2015.
+    <em>The MovieLens Datasets: History and Context.</em>
+    ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4: 19:1–19:19.
+    <a href="https://doi.org/10.1145/2827872" target="_blank" class="footer-citation-link">doi:10.1145/2827872</a>
+    &nbsp;·&nbsp;
+    <a href="http://grouplens.org/datasets/" target="_blank" class="footer-citation-link">GroupLens</a>
+    &nbsp;·&nbsp; Veri seti: <strong>MovieLens ml-32m</strong> (200.948 kullanıcı · 87.585 film · 32M puanlama)
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  // Async poster load if missing
+  {% if not movie.poster_url and movie.tmdbId_clean %}
+  (async () => {
+    try {
+      const KEY = '8265bd1679663a7ea12ac168da84d2e8';
+      const r = await fetch(`https://api.themoviedb.org/3/movie/{{ movie.tmdbId_clean }}?api_key=${KEY}&language=tr-TR`, { signal: AbortSignal.timeout(5000) });
+      if (r.ok) {
+        const d = await r.json();
+        if (d.poster_path) {
+          const wrap = document.getElementById('detail-poster-wrap');
+          wrap.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${d.poster_path}" alt="{{ movie.title }}" style="width:100%;height:100%;object-fit:cover;">`;
+        }
+      }
+    } catch(e) {}
+  })();
+  {% endif %}
+  initNavSearch();
+</script>
+</body>
+</html>

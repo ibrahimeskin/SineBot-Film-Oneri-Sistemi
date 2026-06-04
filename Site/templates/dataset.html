@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Veri Seti Analizi — SineBot</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .ds-wrap { max-width:1200px; margin:0 auto; padding:32px 20px; }
+    .ds-title { font-family:var(--font-d); font-size:2.5rem; letter-spacing:2px; margin-bottom:8px; color:var(--t1); }
+    .ds-sub { font-size:1rem; color:var(--t2); margin-bottom:32px; }
+    
+    .ds-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:16px; margin-bottom:32px; }
+    .ds-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-lg); padding:20px; text-align:center; }
+    .ds-card-val { font-family:var(--font-d); font-size:2.5rem; color:var(--red); margin-bottom:4px; }
+    .ds-card-lbl { font-size:.8rem; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:1px; }
+    
+    .ds-section { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; margin-bottom:32px; }
+    .ds-sec-title { font-size:1.2rem; font-weight:700; color:var(--t1); margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+    
+    table { width:100%; border-collapse:collapse; font-size:.85rem; }
+    th { text-align:left; padding:12px; background:var(--bg3); color:var(--t2); font-weight:600; border-bottom:1px solid var(--border); }
+    td { padding:12px; border-bottom:1px solid var(--border); color:var(--t1); }
+    tr:last-child td { border-bottom:none; }
+    
+    .badge { display:inline-block; padding:3px 8px; border-radius:var(--r-pill); font-size:.7rem; font-weight:700; background:var(--bg4); color:var(--t2); }
+    .badge.type-int32, .badge.type-float64 { background:rgba(0,201,167,.1); color:var(--teal); }
+    .badge.type-object { background:rgba(245,197,24,.1); color:var(--gold); }
+    
+    .stat-row { display:flex; flex-wrap:wrap; gap:24px; margin-bottom:32px; }
+    .stat-col { flex:1 1 350px; background:var(--bg2); border:1px solid var(--border); border-radius:var(--r-lg); padding:24px; }
+    
+    .stat-item { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+    .stat-item:last-child { margin-bottom:0; }
+    .stat-label { width:80px; font-size:.85rem; font-weight:600; color:var(--t2); text-align:right; flex-shrink:0; }
+    .stat-track { flex:1; height:12px; background:var(--bg3); border-radius:var(--r-pill); overflow:hidden; position:relative; box-shadow:inset 0 1px 3px rgba(0,0,0,.2); }
+    .stat-fill { height:100%; border-radius:var(--r-pill); animation:fillIn 1.5s ease-out forwards; width:0; }
+    @keyframes fillIn { from { width:0; } }
+    
+    .stat-fill.red { background:linear-gradient(90deg, #b81d24, var(--red)); }
+    .stat-fill.teal { background:linear-gradient(90deg, #008771, var(--teal)); }
+    .stat-fill.gold { background:linear-gradient(90deg, #bd9608, var(--gold)); }
+    
+    .stat-val { width:55px; font-size:.8rem; font-weight:700; color:var(--t3); text-align:left; flex-shrink:0; font-family:monospace; }
+  </style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="/" class="brand" id="brand-logo">
+    <span class="brand-name">SINE<em>BOT</em></span>
+  </a>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menü" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+  <div class="nav-links">
+    <a href="/" class="nav-link">Keşfet</a>
+    <a href="/dataset" class="nav-link active">Veri Seti Analizi</a>
+  </div>
+  <div class="nav-links" style="margin-left:auto;">
+    <a href="/recommendations" class="btn-ai" id="nav-ai-btn">🤖 AI Öneri</a>
+  </div>
+</nav>
+
+<!-- Mobile Menu Drawer -->
+<div class="mobile-menu" id="mobileMenu" onclick="closeMobileMenuOutside(event)">
+  <div class="mobile-menu-panel">
+    <a href="/" class="mobile-menu-link"><span class="mml-icon">🏠</span> Keşfet</a>
+    <a href="/dataset" class="mobile-menu-link active"><span class="mml-icon">📊</span> Veri Seti</a>
+    <div class="mobile-menu-divider"></div>
+    <a href="/recommendations" class="mobile-menu-ai">🤖 AI Film Öneri</a>
+  </div>
+</div>
+
+<div class="app-container">
+  <div class="ds-wrap">
+    
+    <h1 class="ds-title">Veri Seti Profili</h1>
+    <p class="ds-sub">Makine öğrenmesi modeli ({{ model_name }}) için hazırlanan ve işlenen veri setinin genel incelemesi.</p>
+
+    <!-- Özet Kartları -->
+    <div class="ds-grid">
+      <div class="ds-card">
+        <div class="ds-card-val">{{ "{:,}".format(stats.total_films) }}</div>
+        <div class="ds-card-lbl">Toplam Film</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-val">{{ stats.min_year }} - {{ stats.max_year }}</div>
+        <div class="ds-card-lbl">Yıl Aralığı</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-val">{{ stats.avg_rating }} / 10</div>
+        <div class="ds-card-lbl">Ortalama Puan</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-val">{{ stats.total_genres }}</div>
+        <div class="ds-card-lbl">Farklı Tür</div>
+      </div>
+      <div class="ds-card">
+        <div class="ds-card-val">{{ feature_count }}</div>
+        <div class="ds-card-lbl">ML Feature Sayısı</div>
+      </div>
+    </div>
+
+    <!-- CSS Tabanlı Görselleştirmeler -->
+    <div class="stat-row">
+      
+      <!-- Tür Dağılımı -->
+      <div class="stat-col">
+        <div class="ds-sec-title">🎭 Popüler Türler</div>
+        {% for item in genre_stats %}
+        <div class="stat-item">
+          <div class="stat-label">{{ item.label }}</div>
+          <div class="stat-track">
+            <div class="stat-fill red" style="max-width:{{ item.pct }}%"></div>
+          </div>
+          <div class="stat-val">{{ item.count }}</div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Dönem Dağılımı -->
+      <div class="stat-col">
+        <div class="ds-sec-title">📅 Dönemlere Göre Filmler</div>
+        {% for item in decade_stats %}
+        <div class="stat-item">
+          <div class="stat-label">{{ item.label }}</div>
+          <div class="stat-track">
+            <div class="stat-fill teal" style="max-width:{{ item.pct }}%"></div>
+          </div>
+          <div class="stat-val">{{ item.count }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      
+    </div>
+
+    <!-- Puan Dağılımı -->
+    <div class="ds-section">
+      <div class="ds-sec-title">⭐ Ortalama Puan Dağılımı (Kullanıcı Oyları)</div>
+      <div style="display:flex; flex-direction:column; gap:12px; max-width:800px; margin:0 auto;">
+        {% for item in rating_stats %}
+        <div class="stat-item">
+          <div class="stat-label">{{ item.label }}</div>
+          <div class="stat-track">
+            <div class="stat-fill gold" style="max-width:{{ item.pct }}%"></div>
+          </div>
+          <div class="stat-val">{{ item.count }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+
+
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div class="footer-main">
+    <strong>SineBot</strong> · Makine Öğrenmesi Destekli Film Öneri Sistemi · Veri Madenciliği Projesi © 2026
+  </div>
+  <div class="footer-citation">
+    <span class="footer-citation-label">📚 Veri Kaynağı</span>
+    F. Maxwell Harper ve Joseph A. Konstan. 2015.
+    <em>The MovieLens Datasets: History and Context.</em>
+    ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4: 19:1–19:19.
+    <a href="https://doi.org/10.1145/2827872" target="_blank" class="footer-citation-link">doi:10.1145/2827872</a>
+    &nbsp;·&nbsp;
+    <a href="http://grouplens.org/datasets/" target="_blank" class="footer-citation-link">GroupLens</a>
+    &nbsp;·&nbsp; Veri seti: <strong>MovieLens ml-32m</strong> (200.948 kullanıcı · 87.585 film · 32M puanlama)
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+  // Loading animations for stat-fill elements
+  document.addEventListener('DOMContentLoaded', () => {
+    const fills = document.querySelectorAll('.stat-fill');
+    fills.forEach(fill => {
+      // Trigger animation by setting width equal to max-width
+      setTimeout(() => {
+        fill.style.width = fill.style.maxWidth;
+      }, 100);
+    });
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SineBot — AI Film Öneri</title>
+  <meta name="description" content="Yapay zeka ile kişiselleştirilmiş film önerileri alın.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="top-nav">
+  <a href="/" class="brand" id="brand-logo">
+    <span class="brand-name">SINE<em>BOT</em></span>
+  </a>
+  <a href="/" class="nav-icon-btn" title="Ana Sayfa">🏠</a>
+  <div class="nav-links">
+    <a href="/" class="nav-link" id="nav-kesfet">Keşfet</a>
+    <a href="/dataset" class="nav-link" id="nav-dataset">Veri Seti</a>
+    <a href="/recommendations" class="nav-link active" id="nav-ai">AI Öneri</a>
+  </div>
+  <div class="nav-search">
+    <span class="nav-search-icon">🔍</span>
+    <input type="text" class="nav-search-input" id="navSearchInput"
+           placeholder="Film ara..." autocomplete="off">
+    <div class="nav-search-drop" id="navSearchDrop"></div>
+  </div>
+  <!-- Hamburger (mobile) -->
+  <button class="nav-hamburger" id="navHamburger" aria-label="Menü" onclick="toggleMobileMenu()">
+    <span></span><span></span><span></span>
+  </button>
+
+  <div class="nav-links" style="margin-left:0;">
+    <a href="/" class="btn-ai" style="background:var(--bg3);border:1px solid var(--border);color:var(--t2);box-shadow:none;" id="nav-back-home">
+      ← Ana Sayfa
+    </a>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<div class="mobile-menu" id="mobileMenu" onclick="if(!event.target.closest('.mobile-menu-panel'))document.getElementById('mobileMenu').classList.remove('open'),document.getElementById('navHamburger').classList.remove('open')">
+  <div class="mobile-menu-panel">
+    <a href="/" class="mobile-menu-link"><span class="mml-icon">🏠</span> Keşfet</a>
+    <a href="/dataset" class="mobile-menu-link"><span class="mml-icon">📊</span> Veri Seti</a>
+    <a href="/recommendations" class="mobile-menu-link active"><span class="mml-icon">🤖</span> AI Öneri</a>
+  </div>
+</div>
+
+<div class="app-container">
+  <div class="rec-wrap">
+
+    <!-- HERO -->
+    <div class="rec-hero">
+      <h1 class="rec-title">
+        KİŞİSEL <em>FİLM</em><br>ÖNERİSİ AL
+      </h1>
+      <p class="rec-sub">
+        Tür, yıl, puan ve beğendiğiniz bir filme göre<br>
+        Decision Tree modelimiz size özel filmler seçiyor.
+      </p>
+    </div>
+
+    <!-- FORM -->
+    <div id="formSection">
+
+      <form id="recommendForm">
+
+        <!-- Film Arama -->
+        <div class="rec-card">
+          <div class="rec-card-head">
+            <div class="rec-card-icon">🔍</div>
+            Benzer Film Seçin
+            <span style="font-size:.75rem;color:var(--t3);font-weight:400;margin-left:4px;">(isteğe bağlı · en az 5 harf)</span>
+          </div>
+          <div class="rec-card-body">
+            <div class="msearch-wrap" id="movieSearchWrapper">
+              <span class="msearch-icon">🔍</span>
+              <input type="text" id="movieSearch" class="msearch-inp"
+                     placeholder="Örn: Inception, The Dark Knight..." autocomplete="off">
+              <input type="hidden" id="selectedMovieId" name="selected_movie_id" value="">
+              <div class="msearch-drop" id="movieSearchDropdown"></div>
+            </div>
+            <div id="selectedMovieBadge" class="sel-movie-tag" style="display:none;margin-top:10px;">
+              🎬 <span id="selectedMovieName"></span>
+              <span class="smt-rm" id="removeSelectedMovie">✕</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Yıl + Puan -->
+        <div class="rec-card">
+          <div class="rec-card-head">
+            <div class="rec-card-icon">⚙️</div>
+            Film Kriterleri
+          </div>
+          <div class="rec-card-body">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-lbl">📅 Film Dönemi (Yıl)</label>
+                <div class="stepper">
+                  <button type="button" class="stepper-btn" data-step="-1" id="year-minus">−</button>
+                  <input type="number" id="preferred_year" name="preferred_year"
+                         class="stepper-inp" value="2010"
+                         min="{{ min_year }}" max="{{ max_year }}" step="1">
+                  <button type="button" class="stepper-btn" data-step="+1" id="year-plus">+</button>
+                </div>
+                <div class="form-note">{{ min_year }} – {{ max_year }} aralığı</div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-lbl">⭐ Puan Aralığı (0–10)</label>
+                <div class="score-pair">
+                  <div class="score-box">
+                    <button type="button" class="score-btn" data-target="min" data-step="-0.5" id="min-minus">−</button>
+                    <input type="number" id="minScore" name="min_score"
+                           class="score-inp" step="0.5" min="0" max="10" value="0">
+                    <button type="button" class="score-btn" data-target="min" data-step="+0.5" id="min-plus">+</button>
+                  </div>
+                  <span class="score-sep">—</span>
+                  <div class="score-box">
+                    <button type="button" class="score-btn" data-target="max" data-step="-0.5" id="max-minus">−</button>
+                    <input type="number" id="maxScore" name="max_score"
+                           class="score-inp" step="0.5" min="0" max="10" value="10">
+                    <button type="button" class="score-btn" data-target="max" data-step="+0.5" id="max-plus">+</button>
+                  </div>
+                </div>
+                <div class="score-track">
+                  <div class="score-fill" id="scoreVisualFill" style="left:0%;right:0%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Türler -->
+        <div class="rec-card">
+          <div class="rec-card-head">
+            <div class="rec-card-icon">🎭</div>
+            Film Türleri
+            <span style="font-size:.75rem;color:var(--t3);font-weight:400;margin-left:4px;">(en az 1 · en fazla 5)</span>
+          </div>
+          <div class="rec-card-body">
+            <div class="genre-grid" id="genreGrid">
+              {% for genre in genre_list %}
+              <label class="genre-chip" id="gchip-{{ loop.index }}"
+                     {% if loop.index > 20 %}style="display:none;"{% endif %}>
+                <input type="checkbox" name="genres" value="{{ genre.id }}" class="genre-input">
+                {{ genre.name }}
+              </label>
+              {% endfor %}
+            </div>
+            <div style="margin-top:12px;">
+              <button type="button" class="genre-more" id="genreMoreBtn">+ Daha fazla tür</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn-submit" id="submit-btn">
+          🎬 Film Önerisi Al
+        </button>
+
+      </form>
+    </div>
+
+    <!-- LOADING -->
+    <div class="rec-loading" id="loadingIndicator">
+      <div class="spinner"></div>
+      <div class="rec-loading-t">AI Model Çalışıyor</div>
+      <div class="rec-loading-s">Size özel filmler seçiliyor...</div>
+    </div>
+
+    <!-- SONUÇLAR -->
+    <div id="resultsSection" style="display:none;">
+      <div class="rec-res-head">
+        <span class="res-count" id="resultsCount">0 film</span>
+        <button class="btn-new-s" onclick="resetRecForm()">← Yeni Arama</button>
+      </div>
+      <div class="film-grid" id="recommendationsList"></div>
+      <div id="loadMoreRecContainer" style="display:none;">
+        <button class="btn-more-rec" onclick="loadMoreRec()">Daha Fazla Film</button>
+      </div>
+    </div>
+
+    <!-- HATA -->
+    <div class="error-box" id="errorMessage">
+      <div class="err-icon">⚠️</div>
+      <div class="err-title">Bir Sorun Oluştu</div>
+      <p class="err-msg" id="errorText"></p>
+      <button class="btn-new-s" onclick="resetRecForm()">← Geri Dön</button>
+    </div>
+
+  </div>
+</div>
+
+<footer class="app-footer">
+  <div class="footer-main">
+    <strong>SineBot</strong> · Makine Öğrenmesi Destekli Film Öneri Sistemi · Veri Madenciliği Projesi © 2026
+  </div>
+  <div class="footer-citation">
+    <span class="footer-citation-label">📚 Veri Kaynağı</span>
+    F. Maxwell Harper ve Joseph A. Konstan. 2015.
+    <em>The MovieLens Datasets: History and Context.</em>
+    ACM Transactions on Interactive Intelligent Systems (TiiS) 5, 4: 19:1–19:19.
+    <a href="https://doi.org/10.1145/2827872" target="_blank" class="footer-citation-link">doi:10.1145/2827872</a>
+    &nbsp;·&nbsp;
+    <a href="http://grouplens.org/datasets/" target="_blank" class="footer-citation-link">GroupLens</a>
+    &nbsp;·&nbsp; Veri seti: <strong>MovieLens ml-32m</strong> (200.948 kullanıcı · 87.585 film · 32M puanlama)
+  </div>
+</footer>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+<script>
+// Yıl stepper
+document.querySelectorAll('.stepper-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const step = parseInt(btn.dataset.step);
+    const inp = document.getElementById('preferred_year');
+    let val = parseInt(inp.value) || 2010;
+    val = Math.min({{ max_year }}, Math.max({{ min_year }}, val + step));
+    inp.value = val;
+  });
+});
+
+// Puan bar
+function updateScoreBar() {
+  const mn = parseFloat(document.getElementById('minScore').value) || 0;
+  const mx = parseFloat(document.getElementById('maxScore').value) || 10;
+  const fill = document.getElementById('scoreVisualFill');
+  if (fill) {
+    fill.style.left  = (mn / 10 * 100) + '%';
+    fill.style.right = ((10 - mx) / 10 * 100) + '%';
+  }
+}
+document.querySelectorAll('.score-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id = btn.dataset.target === 'min' ? 'minScore' : 'maxScore';
+    const inp = document.getElementById(id);
+    let v = parseFloat(inp.value);
+    v = Math.round((v + parseFloat(btn.dataset.step)) * 2) / 2;
+    v = Math.min(10, Math.max(0, v));
+    inp.value = v;
+    updateScoreBar();
+  });
+});
+document.getElementById('minScore')?.addEventListener('input', updateScoreBar);
+document.getElementById('maxScore')?.addEventListener('input', updateScoreBar);
+updateScoreBar();
+
+// Genre chip toggle
+document.querySelectorAll('.genre-chip').forEach(chip => {
+  chip.addEventListener('click', e => {
+    e.preventDefault();
+    const cb = chip.querySelector('input');
+    const checked = document.querySelectorAll('.genre-input:checked').length;
+    if (!cb.checked && checked >= 5) { return; }
+    cb.checked = !cb.checked;
+    chip.classList.toggle('sel', cb.checked);
+  });
+});
+
+// Genre more
+let visG = 20;
+document.getElementById('genreMoreBtn')?.addEventListener('click', () => {
+  const chips = document.querySelectorAll('.genre-chip');
+  for (let i = visG; i < visG + 10 && i < chips.length; i++) chips[i].style.display = '';
+  visG += 10;
+  if (visG >= chips.length) document.getElementById('genreMoreBtn').style.display = 'none';
+});
+
+// Nav search
+initNavSearch();
+</script>
+</body>
+</html>
