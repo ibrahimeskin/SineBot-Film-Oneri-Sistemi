@@ -16,14 +16,16 @@ env/
 .env
 .venv/
 
-# Büyük veri dosyaları (GitHub'a yükleme)
-*.csv
-*.pkl
-*.joblib
-*.h5
-*.parquet
-Site/data/
-Site/models/
+# Büyük ham veri dosyaları (GitHub'a yükleme)
+RawData/ratings*.csv
+RawData/tags*.csv
+ProcessedData/ratings*.csv
+
+# Ama küçük runtime dosyalarına izin ver:
+# ProcessedData/movies_cleaned.csv  → dahil
+# ModelResult/best_model.joblib     → dahil
+# ModelResult/movie_stats.csv       → dahil
+# RawData/links.csv                 → dahil
 
 # IDE
 .vscode/
